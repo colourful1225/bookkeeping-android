@@ -94,8 +94,38 @@ agent: agent
 ## 可用命令（ecc-migrated/commands）
 `e2e.md` | `eval.md` | `evolve.md` | `instinct-export.md` | `instinct-import.md` | `instinct-status.md` | `skill-create.md` | `tdd.md` | `test-coverage.md` | `verify.md`
 
+## 命令映射参考（场景 -> 命令）
+| 场景 | 命令 |
+|---|---|
+| E2E 执行 | `e2e.md` |
+| 评测/打分 | `eval.md` |
+| 方案迭代 | `evolve.md` |
+| TDD 循环 | `tdd.md` |
+| 覆盖率提升 | `test-coverage.md` |
+| 结果核验 | `verify.md` |
+| 新技能创建 | `skill-create.md` |
+| 经验导出 | `instinct-export.md` |
+| 经验导入 | `instinct-import.md` |
+| 经验状态查询 | `instinct-status.md` |
+
 ## 可用 Agent（ecc-migrated/agents）
 `build-error-resolver.md` | `e2e-runner.md` | `security-reviewer.md` | `tdd-guide.md`
+
+## Agent 映射参考（场景 -> Agent）
+| 场景 | Agent |
+|---|---|
+| 构建失败/编译错误 | `build-error-resolver.md` |
+| E2E 测试自动化 | `e2e-runner.md` |
+| 安全审查/漏洞分析 | `security-reviewer.md` |
+| TDD 红绿重构 | `tdd-guide.md` |
+
+## 规则映射参考（任务类型 -> 规则）
+| 任务类型 | 必选规则 | 可选增强规则 |
+|---|---|---|
+| 通用开发任务 | `ecc-migrated/rules/common/coding-style.md` + `ecc-migrated/rules/common/security.md` + `ecc-migrated/rules/common/testing.md` | `ecc-migrated/rules/common/patterns.md` / `ecc-migrated/rules/common/performance.md` |
+| Git/提交流程相关 | 上述 3 条 common 基线 | `ecc-migrated/rules/common/git-workflow.md` / `ecc-migrated/rules/common/hooks.md` |
+| 需要 Agent 协同 | 上述 3 条 common 基线 | `ecc-migrated/rules/common/agents.md` |
+| TypeScript 项目任务 | 上述 3 条 common 基线 | `ecc-migrated/rules/typescript/coding-style.md` / `ecc-migrated/rules/typescript/security.md` / `ecc-migrated/rules/typescript/testing.md` / `ecc-migrated/rules/typescript/patterns.md` / `ecc-migrated/rules/typescript/hooks.md` |
 
 ---
 
