@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 继承 Material3 主题，Compose 侧通过 MaterialTheme {} 接管 -->
+    <style name="Theme.BookkeepingApp" parent="Theme.Material3.DayNight.NoActionBar" />
+</resources>

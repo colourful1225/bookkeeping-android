@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  debug 变体网络安全配置。
+  目标：本地联调时允许指定域名使用明文流量，并允许用户证书。
+-->
+<network-security-config>
+
+    <!-- 默认仍不允许明文，避免误放开到所有域名 -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!-- debug 专属：允许明文访问本地调试域名 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <!-- 如用真机调试，将电脑 IP 填在此处 -->
+        <!-- <domain includeSubdomains="false">192.168.1.100</domain> -->
+    </domain-config>
+
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+
+</network-security-config>

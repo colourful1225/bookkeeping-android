@@ -1,0 +1,80 @@
+[versions]
+agp              = "8.13.2"
+kotlin           = "2.0.0"
+ksp              = "2.0.0-1.0.21"
+hilt             = "2.51.1"
+
+room             = "2.6.1"
+workManager      = "2.9.1"
+coroutines       = "1.8.1"
+retrofit         = "2.11.0"
+okhttp           = "4.12.0"
+moshi            = "1.15.2"
+
+coreKtx          = "1.13.1"
+lifecycleRuntime = "2.8.3"
+activityCompose  = "1.9.0"
+composeBom       = "2024.06.00"
+material         = "1.12.0"
+navigation       = "2.7.7"
+
+junit            = "4.13.2"
+junitExt         = "1.2.1"
+espresso         = "3.6.1"
+turbine          = "1.1.0"
+mockwebserver    = "4.12.0"
+coroutinesTest   = "1.8.1"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android      = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-compose      = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+ksp                 = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt                = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+
+[libraries]
+# Room
+room-runtime     = { group = "androidx.room", name = "room-runtime",   version.ref = "room" }
+room-ktx         = { group = "androidx.room", name = "room-ktx",       version.ref = "room" }
+room-compiler    = { group = "androidx.room", name = "room-compiler",  version.ref = "room" }
+
+# WorkManager
+work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "workManager" }
+
+# Hilt
+hilt-android         = { group = "com.google.dagger", name = "hilt-android",           version.ref = "hilt" }
+hilt-compiler        = { group = "com.google.dagger", name = "hilt-compiler",          version.ref = "hilt" }
+hilt-work                  = { group = "androidx.hilt",      name = "hilt-work",                  version = "1.2.0" }
+hilt-work-compiler         = { group = "androidx.hilt",      name = "hilt-compiler",              version = "1.2.0" }
+hilt-navigation-compose    = { group = "androidx.hilt",      name = "hilt-navigation-compose",    version = "1.2.0" }
+
+# Coroutines
+coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Retrofit + Moshi
+retrofit             = { group = "com.squareup.retrofit2", name = "retrofit",             version.ref = "retrofit" }
+retrofit-moshi       = { group = "com.squareup.retrofit2", name = "converter-moshi",      version.ref = "retrofit" }
+okhttp-logging       = { group = "com.squareup.okhttp3",   name = "logging-interceptor",  version.ref = "okhttp" }
+moshi-kotlin         = { group = "com.squareup.moshi",     name = "moshi-kotlin",         version.ref = "moshi" }
+
+# AndroidX
+core-ktx          = { group = "androidx.core",      name = "core-ktx",             version.ref = "coreKtx"          }
+lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntime" }
+activity-compose  = { group = "androidx.activity",  name = "activity-compose",     version.ref = "activityCompose"  }
+compose-bom       = { group = "androidx.compose",   name = "compose-bom",          version.ref = "composeBom"       }
+compose-ui              = { group = "androidx.compose.ui",             name = "ui" }
+compose-material3       = { group = "androidx.compose.material3",       name = "material3" }
+compose-icons-extended  = { group = "androidx.compose.material",        name = "material-icons-extended" }
+compose-viewmodel       = { group = "androidx.lifecycle",               name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntime" }
+material                = { group = "com.google.android.material",        name = "material",                    version.ref = "material" }
+navigation-compose      = { group = "androidx.navigation",                 name = "navigation-compose",          version.ref = "navigation" }
+
+# Test
+junit            = { group = "junit",              name = "junit",              version.ref = "junit"    }
+junit-ext        = { group = "androidx.test.ext",  name = "junit",              version.ref = "junitExt" }
+espresso-core    = { group = "androidx.test.espresso", name = "espresso-core",  version.ref = "espresso" }
+room-testing     = { group = "androidx.room",     name = "room-testing",             version.ref = "room"          }
+work-testing     = { group = "androidx.work",     name = "work-testing",             version.ref = "workManager"   }
+coroutines-test  = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+mockwebserver    = { group = "com.squareup.okhttp3", name = "mockwebserver",           version.ref = "mockwebserver" }
+turbine          = { group = "app.cash.turbine",    name = "turbine",                  version.ref = "turbine"       }

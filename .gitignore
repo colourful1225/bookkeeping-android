@@ -1,0 +1,38 @@
+# =============================
+# Android / Gradle
+# =============================
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+*.hprof
+captures/
+
+# Android Studio
+.navigation/
+*.apk
+*.aab
+*.ap_
+
+# KSP & Room schema（保留 schema 目录，忽略生成缓存）
+app/schemas/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kotlin / Java
+out/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Secrets（绝不提交）
+google-services.json
+keystore.jks
+*.keystore
+
+# Project-specific ignores
+.github/
+ecc-migrated/
