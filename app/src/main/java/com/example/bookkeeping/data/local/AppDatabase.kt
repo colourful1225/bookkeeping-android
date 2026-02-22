@@ -25,7 +25,7 @@ import com.example.bookkeeping.data.local.entity.TransactionEntity
         SyncStateEntity::class,
         CategoryEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

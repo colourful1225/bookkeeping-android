@@ -258,7 +258,7 @@ amount,category,date,note
 ```
 
 #### 数据库版本
-- 当前版本：**v3**
+- 当前版本：**v4**
 - Schema 位置：`app/schemas/`
 - 迁移策略：`fallbackToDestructiveMigration`（开发阶段）
 
