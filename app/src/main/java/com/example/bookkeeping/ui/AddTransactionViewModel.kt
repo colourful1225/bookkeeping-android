@@ -30,6 +30,7 @@ class AddTransactionViewModel @Inject constructor(
         val categoryId: String = "",
         val selectedDate: Long = System.currentTimeMillis(),
         val note: String = "",
+        val photoUri: String? = null,  // 凭证照片 URI (content:// 格式)
         val categories: List<CategoryEntity> = emptyList(),
         val isSubmitting: Boolean = false,
         val error: String? = null,
@@ -134,6 +135,20 @@ class AddTransactionViewModel @Inject constructor(
     }
 
     /**
+     * 更新照片 URI。
+     */
+    fun updatePhotoUri(uri: String?) {
+        _formState.value = _formState.value.copy(photoUri = uri)
+    }
+
+    /**
+     * 清除照片。
+     */
+    fun clearPhoto() {
+        _formState.value = _formState.value.copy(photoUri = null)
+    }
+
+    /**
      * 提交表单，新增交易。
      */
     fun submitForm(onSuccess: () -> Unit = {}) {
@@ -156,6 +171,7 @@ class AddTransactionViewModel @Inject constructor(
                     amount = amount,
                     categoryId = state.categoryId,
                     note = state.note.takeIf { it.isNotBlank() },
+                    photoUri = state.photoUri,
                 )
                 
                 _formState.value = _formState.value.copy(

@@ -20,6 +20,7 @@ data class TransactionEntity(
     val type: String,
     val categoryId: String,
     val note: String? = null,
+    val photoUri: String? = null,  // 凭证照片 URI (content:// 格式)
     val occurredAt: Long,
     val updatedAt: Long,
     val syncStatus: String = SyncStatus.PENDING,

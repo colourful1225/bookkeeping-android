@@ -46,4 +46,63 @@ interface TransactionDao {
     /** 单条 id 查询（供 ViewModel 详情页使用）。 */
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun findById(id: String): TransactionEntity?
+
+    /**
+     * 高级搜索过滤查询
+     * @param type 交易类型（INCOME/EXPENSE，null 表示不限）
+     * @param categoryId 分类 ID（null 表示不限）
+     * @param startDate 起始日期时间戳（null 表示不限）
+     * @param endDate 结束日期时间戳（null 表示不限）
+     * @param minAmount 最小金额（分，null 表示不限）
+     * @param maxAmount 最大金额（分，null 表示不限）
+     * @param query 备注关键词搜索（模糊匹配，null 表示不限）
+     */
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE (:type IS NULL OR type = :type)
+          AND (:categoryId IS NULL OR categoryId = :categoryId)
+          AND (:startDate IS NULL OR occurredAt >= :startDate)
+          AND (:endDate IS NULL OR occurredAt <= :endDate)
+          AND (:minAmount IS NULL OR amount >= :minAmount)
+          AND (:maxAmount IS NULL OR amount <= :maxAmount)
+          AND (:query IS NULL OR note LIKE '%' || :query || '%')
+        ORDER BY occurredAt DESC
+        """
+    )
+    fun searchTransactions(
+        type: String?,
+        categoryId: String?,
+        startDate: Long?,
+        endDate: Long?,
+        minAmount: Long?,
+        maxAmount: Long?,
+        query: String?,
+    ): Flow<List<TransactionEntity>>
+
+    /**
+     * 按日期范围和类型统计
+     */
+    @Query(
+        """
+        SELECT COUNT(*) as count, SUM(amount) as total
+        FROM transactions
+        WHERE type = :type
+          AND occurredAt >= :startDate
+          AND occurredAt <= :endDate
+        """
+    )
+    suspend fun getSummary(
+        type: String,
+        startDate: Long,
+        endDate: Long,
+    ): TransactionSummary?
 }
+
+/**
+ * 统计数据模型
+ */
+data class TransactionSummary(
+    val count: Int,
+    val total: Long,
+)

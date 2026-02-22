@@ -32,7 +32,7 @@ class TransactionRepository @Inject constructor(
      *
      * 事务保证：若任意写入失败，两表均回滚，不会出现"有交易但无 outbox"的状态。
      */
-    override suspend fun addExpense(amount: Long, categoryId: String, note: String?) {
+    override suspend fun addExpense(amount: Long, categoryId: String, note: String?, photoUri: String?) {
         val now   = System.currentTimeMillis()
         val txId  = UUID.randomUUID().toString()
 
@@ -42,6 +42,7 @@ class TransactionRepository @Inject constructor(
             type        = "EXPENSE",
             categoryId  = categoryId,
             note        = note,
+            photoUri    = photoUri,
             occurredAt  = now,
             updatedAt   = now,
             syncStatus  = SyncStatus.PENDING,

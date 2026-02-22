@@ -18,12 +18,14 @@ class AddExpenseUseCase @Inject constructor(
      * @param amount     金额，单位：分（必须 > 0）
      * @param categoryId 分类 ID
      * @param note       备注（可空）
+     * @param photoUri   凭证照片 URI（可空）
      * @throws IllegalArgumentException 若金额 <= 0
      */
     suspend operator fun invoke(
         amount: Long,
         categoryId: String,
         note: String? = null,
+        photoUri: String? = null,
     ) {
         require(amount > 0) { "金额必须大于 0，当前值：$amount" }
         require(categoryId.isNotBlank()) { "分类 ID 不能为空" }
@@ -32,6 +34,7 @@ class AddExpenseUseCase @Inject constructor(
             amount     = amount,
             categoryId = categoryId,
             note       = note,
+            photoUri   = photoUri,
         )
     }
 }
