@@ -14,8 +14,8 @@ android {
         applicationId = "com.example.bookkeeping"
         minSdk        = 26
         targetSdk     = 36
-        versionCode   = 1
-        versionName   = "0.1.0"
+        versionCode   = 2
+        versionName   = "1.1.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -83,11 +83,18 @@ dependencies {
     // AndroidX / Compose
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime)
+    implementation(libs.lifecycle.runtime.compose)
     implementation(libs.activity.compose)
     implementation(libs.material)   // XML 主题 Theme.Material3.DayNight 来源
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
+    implementation(libs.navigation.compose)
+
+    // Image Loading
+    implementation(libs.coil.compose)
+    // Excel Parsing
+    implementation(libs.fastexcel.reader)
     implementation(libs.compose.icons.extended)
     implementation(libs.compose.viewmodel)
     implementation(libs.navigation.compose)
@@ -103,5 +110,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.room.testing)
     androidTestImplementation(libs.coroutines.test)
+    androidTestImplementation(libs.turbine)
 }
 

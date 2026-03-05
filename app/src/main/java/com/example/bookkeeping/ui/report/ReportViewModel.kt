@@ -1,12 +1,15 @@
 package com.example.bookkeeping.ui.report
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookkeeping.domain.model.ReportData
 import com.example.bookkeeping.domain.model.ReportPeriodFactory
 import com.example.bookkeeping.domain.model.ReportPeriodType
 import com.example.bookkeeping.domain.usecase.GetReportUseCase
+import com.example.bookkeeping.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +27,7 @@ sealed interface ReportUiState {
 @HiltViewModel
 class ReportViewModel @Inject constructor(
     private val useCase: GetReportUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _periodType = MutableStateFlow(ReportPeriodType.MONTH)
@@ -45,6 +49,12 @@ class ReportViewModel @Inject constructor(
     }
 
     fun refresh() = loadReport(_periodType.value, _referenceDate.value)
+
+    fun resetToCurrentPeriod() {
+        val today = LocalDate.now()
+        _referenceDate.value = today
+        loadReport(_periodType.value, today)
+    }
 
     fun shiftPeriod(delta: Int) {
         val current = _referenceDate.value
@@ -70,7 +80,8 @@ class ReportViewModel @Inject constructor(
             }.onSuccess { data ->
                 _uiState.value = ReportUiState.Success(data)
             }.onFailure { e ->
-                _uiState.value = ReportUiState.Error(e.message ?: "未知错误")
+                val detail = e.message ?: context.getString(R.string.error_unknown)
+                _uiState.value = ReportUiState.Error(detail)
             }
         }
     }

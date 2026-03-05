@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AccessibilityService 配置。
+
+    监听目标应用：微信（com.tencent.mm）、支付宝（com.eg.android.AlipayGphone）。
+    触发时机：Window 状态变化（新页面打开）+ 页面内容变化。
+    不启用 FLAG_REQUEST_TOUCH_EXPLORATION_MODE，不干扰用户触摸输入。
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/accessibility_service_desc"
+    android:notificationTimeout="500"
+    android:packageNames="com.tencent.mm,com.eg.android.AlipayGphone"
+    android:settingsActivity="com.example.bookkeeping.ui.MainActivity" />

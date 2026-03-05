@@ -57,14 +57,28 @@ class AddExpenseUseCaseTest {
 }
 
 // ── 测试替身 ──────────────────────────────────────────────
-private data class FakeEntry(val amount: Long, val categoryId: String, val note: String?)
+private data class FakeEntry(
+    val amount: Long,
+    val categoryId: String,
+    val note: String?,
+    val photoUri: String?,
+)
 
 private class FakeTransactionRepository : ITransactionRepository {
     val addedExpenses = mutableListOf<FakeEntry>()
 
     override fun observeTransactions(): Flow<List<TransactionEntity>> = emptyFlow()
 
-    override suspend fun addExpense(amount: Long, categoryId: String, note: String?) {
-        addedExpenses.add(FakeEntry(amount, categoryId, note))
+    override suspend fun addExpense(
+        amount: Long,
+        categoryId: String,
+        note: String?,
+        photoUri: String?,
+    ) {
+        addedExpenses.add(FakeEntry(amount, categoryId, note, photoUri))
+    }
+
+    override suspend fun deleteTransaction(transactionId: Long) {
+        // 测试替身实现：不做任何操作
     }
 }

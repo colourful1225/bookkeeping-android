@@ -34,10 +34,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.bookkeeping.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,15 +49,14 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onBack: () -> Unit = {},
     onCategoryManage: () -> Unit = {},
-    onFeatureManage: () -> Unit = {},
     onBudgetManage: () -> Unit = {},
+    onAutoImport: () -> Unit = {},
+    onGeneralSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
-
     // 导入文件选择器
     val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
+        contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
         if (uri != null) {
             viewModel.importCsvFile(uri)
@@ -65,19 +68,25 @@ fun SettingsScreen(
         contract = ActivityResultContracts.CreateDocument("text/csv"),
     ) { uri ->
         if (uri != null) {
-            context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                viewModel.exportCsvFile(outputStream)
-            }
+            viewModel.exportCsvFile(uri)
+        }
+    }
+
+    val exportLogLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/plain"),
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportDebugLogFile(uri)
         }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("设置") },
+                title = { Text(stringResource(R.string.settings_title), fontFamily = systemDefaultFontFamily()) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -91,29 +100,55 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SectionTitle("自动记账")
-            SettingsCard {
-                SettingsItem(title = "自动记账", onClick = {})
-                DividerLine()
-                SettingsItem(title = "记账分类管理", onClick = onCategoryManage)
-                DividerLine()
-                SettingsItem(title = "功能管理", onClick = onFeatureManage)
-                DividerLine()
-                SettingsItem(title = "预算管理", onClick = onBudgetManage)
-            }
-
-            SectionTitle("导入数据")
+            SectionTitle(stringResource(R.string.section_auto_import))
             SettingsCard {
                 SettingsItem(
-                    title = "导入数据",
-                    subtitle = "支持导入其他软件账单（CSV）",
-                    onClick = { filePickerLauncher.launch("text/*") },
+                    title = stringResource(R.string.setting_auto_import),
+                    subtitle = stringResource(R.string.setting_auto_import_desc),
+                    onClick = onAutoImport
+                )
+                DividerLine()
+                SettingsItem(title = stringResource(R.string.setting_category_management), onClick = onCategoryManage)
+                DividerLine()
+                SettingsItem(title = stringResource(R.string.setting_budget_management), onClick = onBudgetManage)
+            }
+
+            SectionTitle(stringResource(R.string.section_general))
+            SettingsCard {
+                SettingsItem(
+                    title = stringResource(R.string.general_title),
+                    subtitle = "${stringResource(R.string.general_language_title)} / ${stringResource(R.string.general_theme_title)}",
+                    onClick = onGeneralSettings,
+                )
+            }
+
+            SectionTitle(stringResource(R.string.section_import_data))
+            SettingsCard {
+                SettingsItem(
+                    title = stringResource(R.string.setting_import_data),
+                    subtitle = stringResource(R.string.setting_import_data_desc),
+                    onClick = {
+                        filePickerLauncher.launch(
+                            arrayOf(
+                                "text/csv",
+                                "text/*",
+                                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                "application/vnd.ms-excel",
+                            )
+                        )
+                    },
                 )
                 DividerLine()
                 SettingsItem(
-                    title = "导出数据",
-                    subtitle = "导出所有交易记录为 CSV",
+                    title = stringResource(R.string.setting_export_data),
+                    subtitle = stringResource(R.string.setting_export_data_desc),
                     onClick = { exportLauncher.launch("bookkeeping_export_${System.currentTimeMillis()}.csv") }
+                )
+                DividerLine()
+                SettingsItem(
+                    title = stringResource(R.string.setting_export_log),
+                    subtitle = stringResource(R.string.setting_export_log_desc),
+                    onClick = { exportLogLauncher.launch("bookkeeping_debug_${System.currentTimeMillis()}.log") },
                 )
             }
 
@@ -134,9 +169,10 @@ fun SettingsScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                 ) {
                     Text(
-                        "导出成功！",
+                        "${uiState.exportSuccessSource ?: stringResource(R.string.export_success_default)}${stringResource(R.string.export_success_suffix)}",
                         modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.primary,
+                        fontFamily = systemDefaultFontFamily(),
                     )
                 }
             }
@@ -151,6 +187,7 @@ fun SettingsScreen(
                         error,
                         modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.error,
+                        fontFamily = systemDefaultFontFamily(),
                     )
                 }
             }
@@ -165,21 +202,26 @@ fun SettingsScreen(
                         error,
                         modifier = Modifier.padding(12.dp),
                         color = MaterialTheme.colorScheme.error,
+                        fontFamily = systemDefaultFontFamily(),
                     )
                 }
             }
 
-            SectionTitle("关于应用")
+            SectionTitle(stringResource(R.string.section_about))
             SettingsCard {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text("账本记录 v1.0.0")
                     Text(
-                        "一个简洁、高效的离线记账应用。",
+                        stringResource(R.string.app_name_version),
+                        fontFamily = systemDefaultFontFamily(),
+                    )
+                    Text(
+                        stringResource(R.string.app_description),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontFamily = systemDefaultFontFamily(),
                     )
                 }
             }
@@ -189,7 +231,11 @@ fun SettingsScreen(
 
 @Composable
 private fun SectionTitle(title: String) {
-    Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+    Text(title, fontWeight = FontWeight.Bold, fontSize = 16.sp, fontFamily = systemDefaultFontFamily())
+}
+
+private fun systemDefaultFontFamily(): FontFamily {
+    return FontFamily.Default  // 使用系统默认字体，自动缩放中文支持
 }
 
 @Composable
@@ -229,12 +275,13 @@ private fun SettingsItem(
             verticalArrangement = Arrangement.spacedBy(2.dp),
             modifier = Modifier.weight(1f),
         ) {
-            Text(title, color = textColor)
+            Text(title, color = textColor, fontFamily = systemDefaultFontFamily())
             if (subtitle != null) {
                 Text(
                     subtitle,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontFamily = systemDefaultFontFamily(),
                 )
             }
         }
@@ -267,42 +314,46 @@ private fun ImportResultCard(result: com.example.bookkeeping.data.remote.CsvImpo
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("导入结果", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.import_result_title), fontWeight = FontWeight.Bold, fontFamily = systemDefaultFontFamily())
             
             Text(
-                "✅ 成功: ${result.successCount} 条",
+                stringResource(R.string.import_result_success, result.successCount),
                 fontSize = 14.sp,
                 color = Color(0xFF4CAF50),
+                fontFamily = systemDefaultFontFamily(),
             )
 
             if (result.failureCount > 0) {
                 Text(
-                    "❌ 失败: ${result.failureCount} 条",
+                    stringResource(R.string.import_result_failure, result.failureCount),
                     fontSize = 14.sp,
                     color = Color(0xFFF44336),
+                    fontFamily = systemDefaultFontFamily(),
                 )
             }
 
             Text(
-                "共处理: ${result.importedRowCount} 条",
+                stringResource(R.string.import_result_total, result.importedRowCount),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontFamily = systemDefaultFontFamily(),
             )
 
-            // 显示错误详情（最多前 3 条）
             if (result.errors.isNotEmpty()) {
-                Text("错误信息", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(stringResource(R.string.import_result_errors), fontWeight = FontWeight.Bold, fontSize = 12.sp, fontFamily = systemDefaultFontFamily())
                 result.errors.take(3).forEach { error ->
                     Text(
                         "• $error",
                         fontSize = 11.sp,
                         color = Color(0xFFF44336),
+                        fontFamily = systemDefaultFontFamily(),
                     )
                 }
                 if (result.errors.size > 3) {
                     Text(
-                        "... 及其他 ${result.errors.size - 3} 条错误",
+                        stringResource(R.string.import_result_more_errors, result.errors.size - 3),
                         fontSize = 11.sp,
+                        fontFamily = systemDefaultFontFamily(),
                     )
                 }
             }

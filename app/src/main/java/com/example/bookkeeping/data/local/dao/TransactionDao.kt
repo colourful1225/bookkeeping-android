@@ -97,7 +97,40 @@ interface TransactionDao {
         startDate: Long,
         endDate: Long,
     ): TransactionSummary?
+
+    /**
+     * 获取分类使用频率排序
+     * @param type 交易类型（INCOME/EXPENSE）
+     */
+    @Query(
+        """
+        SELECT categoryId, COUNT(*) as frequency
+        FROM transactions
+        WHERE type = :type
+        GROUP BY categoryId
+        ORDER BY frequency DESC
+        """
+    )
+    suspend fun getCategoryFrequency(
+        type: String,
+    ): List<CategoryFrequency>
+
+    /** 按 ID 删除单条交易记录。 */
+    @Query("DELETE FROM transactions WHERE id = :id")
+    suspend fun delete(id: String)
+
+    /** 按 ID 查询单条交易记录（简化别名）。 */
+    @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
+    suspend fun getById(id: String): TransactionEntity?
 }
+
+/**
+ * 分类使用频率模型
+ */
+data class CategoryFrequency(
+    val categoryId: String,
+    val frequency: Int,
+)
 
 /**
  * 统计数据模型

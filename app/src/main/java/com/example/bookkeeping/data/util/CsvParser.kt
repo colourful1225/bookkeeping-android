@@ -24,12 +24,13 @@ object CsvParser {
         reader.use { bf ->
             // 读取头行
             val headerLine = bf.readLine() ?: return result
-            val headers = parseCsvLine(headerLine)
+            val delimiter = if (headerLine.contains('\t')) '\t' else ','
+            val headers = parseDelimitedLine(headerLine, delimiter)
 
             // 读取数据行
             bf.forEachLine { line ->
                 if (line.isNotBlank()) {
-                    val values = parseCsvLine(line)
+                    val values = parseDelimitedLine(line, delimiter)
                     val row = mutableMapOf<String, String>()
                     
                     headers.forEachIndexed { index, header ->
@@ -53,7 +54,7 @@ object CsvParser {
      *
      * 支持引号和逗号转义。
      */
-    private fun parseCsvLine(line: String): List<String> {
+    private fun parseDelimitedLine(line: String, delimiter: Char): List<String> {
         val fields = mutableListOf<String>()
         var current = StringBuilder()
         var inQuotes = false
@@ -65,7 +66,7 @@ object CsvParser {
                 char == '"' && (i == 0 || line[i - 1] != '\\') -> {
                     inQuotes = !inQuotes
                 }
-                char == ',' && !inQuotes -> {
+                char == delimiter && !inQuotes -> {
                     fields.add(current.toString().trim())
                     current = StringBuilder()
                 }
@@ -84,22 +85,33 @@ object CsvParser {
      * 根据 CSV 行数据构建导入对象。
      *
      * 映射规则（不区分大小写）：
-     * - amount, 金额, price → amount
-     * - category, 分类, type → category
-     * - date, 日期, time → date
-     * - note, 备注, memo, description → note
+      * - amount, 金额, price → amount
+      * - category, 记账分类, 分类 → category
+      * - subcategory, 分类子类 → subcategory
+      * - type, 收支类型 → type
+      * - date, 账单日期, 日期 → date
+      * - note, 备注, memo, description → note
      */
     fun mapRowToImportData(row: Map<String, String>): Map<String, String?> {
         val result = mutableMapOf<String, String?>()
 
         // 映射金额
-        result["amount"] = findValue(row, listOf("amount", "金额", "price", "金钱", "消费金额"))
+          result["amount"] = findValue(row, listOf("amount", "金额", "price", "金钱", "消费金额", "收支金额"))
 
         // 映射分类
-        result["category"] = findValue(row, listOf("category", "分类", "type", "类别", "消费分类"))
+          result["category"] = findValue(row, listOf("category", "记账分类", "分类", "类别", "消费分类"))
+
+          // 映射分类 ID
+          result["categoryId"] = findValue(row, listOf("categoryid", "category_id", "分类id", "分类ID"))
+
+          // 映射分类子类
+          result["subcategory"] = findValue(row, listOf("subcategory", "分类子类", "子类", "子分类"))
+
+          // 映射收支类型
+          result["type"] = findValue(row, listOf("type", "收支类型", "交易类型", "类型"))
 
         // 映射日期
-        result["date"] = findValue(row, listOf("date", "日期", "time", "时间", "发生日期", "交易日期"))
+          result["date"] = findValue(row, listOf("date", "账单日期", "日期", "time", "时间", "发生日期", "交易日期"))
 
         // 映射备注
         result["note"] = findValue(row, listOf("note", "备注", "memo", "description", "说明", "摘要"))

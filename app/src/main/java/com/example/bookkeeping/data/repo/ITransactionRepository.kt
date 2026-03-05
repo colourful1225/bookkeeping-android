@@ -12,4 +12,5 @@ import kotlinx.coroutines.flow.Flow
 interface ITransactionRepository {
     fun observeTransactions(): Flow<List<TransactionEntity>>
     suspend fun addExpense(amount: Long, categoryId: String, note: String?, photoUri: String? = null)
+    suspend fun deleteTransaction(transactionId: Long)
 }

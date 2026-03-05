@@ -8,6 +8,7 @@ import com.example.bookkeeping.data.local.entity.CategoryEntity
 import com.example.bookkeeping.data.local.entity.TransactionEntity
 import com.example.bookkeeping.domain.usecase.AddExpenseUseCase
 import com.example.bookkeeping.domain.usecase.ObserveTransactionsUseCase
+import com.example.bookkeeping.R
 import com.example.bookkeeping.sync.SyncScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -50,7 +51,11 @@ class TransactionListViewModel @Inject constructor(
     fun addSampleExpense() {
         viewModelScope.launch {
             try {
-                addExpense(amount = 1000L, categoryId = "food", note = "示例支出")
+                addExpense(
+                    amount = 1000L,
+                    categoryId = "food",
+                    note = context.getString(R.string.sample_expense_note),
+                )
                 SyncScheduler.enqueueOneShot(context)
             } catch (e: IllegalArgumentException) {
                 // TODO: 将 e.message 反映到 UiState.errorMessage

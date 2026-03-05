@@ -62,6 +62,32 @@ class TransactionRepository @Inject constructor(
             db.outboxDao().insert(op)
         }
     }
+
+    /**
+     * 删除交易记录。
+     *
+     * 事务保证：删除时同时记录到 outbox，确保同步一致性。
+     */
+    override suspend fun deleteTransaction(transactionId: Long) {
+        val now = System.currentTimeMillis()
+        
+        // 首先获取要删除的交易（如果需要在 outbox 中记录）
+        val tx = db.transactionDao().getById(transactionId.toString())
+        
+        val op = OutboxOpEntity(
+            opId             = UUID.randomUUID().toString(),
+            entityId         = transactionId.toString(),
+            opType           = OpType.DELETE,
+            payloadJson      = if (tx != null) json.toJson(tx) else "",
+            idempotencyKey   = "tx-delete-$transactionId",
+            createdAt        = now,
+        )
+
+        db.withTransaction {
+            db.transactionDao().delete(transactionId.toString())
+            db.outboxDao().insert(op)
+        }
+    }
 }
 
 /** Moshi/Gson 封装：由 DI 提供具体实现。 */

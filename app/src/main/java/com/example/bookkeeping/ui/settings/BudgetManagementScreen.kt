@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,10 +25,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,40 +39,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.bookkeeping.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetManagementScreen(
+    viewModel: BudgetManagementViewModel = hiltViewModel(),
     onBack: () -> Unit = {},
 ) {
-    // 保存分类预算状态
-    var budgets by remember {
-        mutableStateOf(
-            listOf(
-                BudgetItem("🍔", "餐饮", 1000, 580),
-                BudgetItem("🚖", "出行", 800, 200),
-                BudgetItem("🛒", "购物", 1500, 650),
-                BudgetItem("🏠", "居住", 2000, 0),
-            )
-        )
-    }
-    
-    var editingBudget by remember { mutableStateOf<BudgetItem?>(null) }
-    
-    val totalBudget = budgets.sumOf { it.budget }
-    val totalSpent = budgets.sumOf { it.spent }
+    val uiState by viewModel.uiState.collectAsState()
+    var editingBudget by remember { mutableStateOf<BudgetCategoryUi?>(null) }
+
+    val totalBudget = uiState.items.sumOf { it.budget }
+    val totalSpent = uiState.items.sumOf { it.spent }
     val remaining = totalBudget - totalSpent
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("预算管理") },
+                title = { Text(stringResource(R.string.page_title_budget)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.button_back))
                     }
                 },
             )
@@ -85,7 +79,7 @@ fun BudgetManagementScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            SectionTitle("预算概览")
+            SectionTitle(stringResource(R.string.label_budget_overview))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -97,7 +91,7 @@ fun BudgetManagementScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("本月总预算", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.label_total_budget), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("¥ $totalBudget", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
                     Row(
@@ -105,7 +99,7 @@ fun BudgetManagementScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("已支出", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.label_spent), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("¥ $totalSpent", fontSize = 16.sp, color = MaterialTheme.colorScheme.error)
                     }
                     Row(
@@ -113,46 +107,55 @@ fun BudgetManagementScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("剩余", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.label_remaining), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("¥ $remaining", fontSize = 16.sp, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
 
-            SectionTitle("分类预算（点击编辑）")
-            budgets.forEach { budget ->
-                BudgetCategoryCard(
-                    item = budget,
-                    onClick = { editingBudget = budget },
-                )
-            }
-
-            SectionTitle("关于")
+            SectionTitle(stringResource(R.string.section_title_reminder))
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("预算管理", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        "为每个分类设置预算，帮助你合理规划消费，避免月光。点击分类预算卡片可编辑。",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.label_budget_alert), fontWeight = FontWeight.Medium)
+                        Text(
+                            stringResource(R.string.desc_budget_alert),
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = uiState.budgetAlertEnabled,
+                        onCheckedChange = { viewModel.updateBudgetAlertEnabled(it) },
                     )
                 }
             }
+
+            SectionTitle(stringResource(R.string.label_category_budgets))
+            uiState.items.forEach { budget ->
+                BudgetCategoryCard(
+                    item = budget,
+                    onClick = { editingBudget = budget },
+                )
+            }
         }
-        
-        // 编辑对话框
+
         editingBudget?.let { budget ->
             EditBudgetDialog(
                 budget = budget,
                 onDismiss = { editingBudget = null },
                 onConfirm = { newBudgetValue ->
-                    budgets = budgets.map { 
-                        if (it.name == budget.name) it.copy(budget = newBudgetValue) else it
-                    }
+                    viewModel.updateCategoryBudget(budget.categoryId, newBudgetValue)
                     editingBudget = null
                 },
             )
@@ -166,7 +169,7 @@ private fun SectionTitle(title: String) {
 }
 
 @Composable
-private fun BudgetCategoryCard(item: BudgetItem, onClick: () -> Unit) {
+private fun BudgetCategoryCard(item: BudgetCategoryUi, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,7 +197,6 @@ private fun BudgetCategoryCard(item: BudgetItem, onClick: () -> Unit) {
                     )
                 }
             }
-            // 进度条
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -218,31 +220,24 @@ private fun BudgetCategoryCard(item: BudgetItem, onClick: () -> Unit) {
     }
 }
 
-data class BudgetItem(
-    val icon: String,
-    val name: String,
-    val budget: Int,
-    val spent: Int,
-)
-
 @Composable
 private fun EditBudgetDialog(
-    budget: BudgetItem,
+    budget: BudgetCategoryUi,
     onDismiss: () -> Unit,
     onConfirm: (Int) -> Unit,
 ) {
     var inputValue by remember { mutableStateOf(budget.budget.toString()) }
-    
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("编辑${budget.name}预算") },
+        title = { Text(stringResource(R.string.dialog_title_edit_budget, budget.name)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("当前已支出：¥${budget.spent}", fontSize = 14.sp)
+                Text(stringResource(R.string.label_current_spent, budget.spent), fontSize = 14.sp)
                 OutlinedTextField(
                     value = inputValue,
                     onValueChange = { inputValue = it.filter { c -> c.isDigit() } },
-                    label = { Text("预算金额（元）") },
+                    label = { Text(stringResource(R.string.label_budget_amount)) },
                     singleLine = true,
                 )
             }
@@ -253,12 +248,12 @@ private fun EditBudgetDialog(
                     inputValue.toIntOrNull()?.let(onConfirm)
                 }
             ) {
-                Text("确定")
+                Text(stringResource(R.string.button_confirm))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("取消")
+                Text(stringResource(R.string.button_cancel))
             }
         },
     )

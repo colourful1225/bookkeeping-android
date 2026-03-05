@@ -7,8 +7,11 @@ import com.example.bookkeeping.domain.model.CategoryItem
 import com.example.bookkeeping.domain.model.PeriodSummary
 import com.example.bookkeeping.domain.model.ReportData
 import com.example.bookkeeping.domain.model.ReportPeriod
+import com.example.bookkeeping.domain.model.ReportPeriodFactory
 import com.example.bookkeeping.domain.model.ReportPeriodType
 import com.example.bookkeeping.domain.model.TrendPoint
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -45,6 +48,9 @@ class GetReportUseCase @Inject constructor(
             current.totalIncome,
         )
 
+        // ---------- 最近多期趋势 ----------
+        val recentTrend = buildRecentPeriodTrend(period, 6)
+
         return ReportData(
             period             = period,
             current            = current,
@@ -52,6 +58,7 @@ class GetReportUseCase @Inject constructor(
             trend              = trend,
             expenseCategories  = expenseCats,
             incomeCategories   = incomeCats,
+            recentPeriodTrend  = recentTrend,
         )
     }
 
@@ -62,6 +69,35 @@ class GetReportUseCase @Inject constructor(
         val income  = rows.firstOrNull { it.type == "INCOME"  }?.total ?: 0L
         val expense = rows.firstOrNull { it.type == "EXPENSE" }?.total ?: 0L
         return PeriodSummary(totalIncome = income, totalExpense = expense)
+    }
+
+    /** 构建最近 [count] 期的趋势点，用于"最近趋势"区块。 */
+    private suspend fun buildRecentPeriodTrend(period: ReportPeriod, count: Int): List<TrendPoint> {
+        require(count > 0) { "count must be > 0" }
+        val zone = ZoneId.systemDefault()
+        val refDate = Instant.ofEpochMilli(period.currentStart).atZone(zone).toLocalDate()
+        return (count - 1 downTo 0).map { shift ->
+            val shifted = when (period.type) {
+                ReportPeriodType.WEEK  -> refDate.minusWeeks(shift.toLong())
+                ReportPeriodType.MONTH -> refDate.minusMonths(shift.toLong())
+                ReportPeriodType.YEAR  -> refDate.minusYears(shift.toLong())
+            }
+            val p = when (period.type) {
+                ReportPeriodType.WEEK  -> ReportPeriodFactory.week(shifted)
+                ReportPeriodType.MONTH -> ReportPeriodFactory.month(shifted)
+                ReportPeriodType.YEAR  -> ReportPeriodFactory.year(shifted)
+            }
+            val summary = summarize(p.currentStart, p.currentEnd)
+            TrendPoint(
+                label = when (period.type) {
+                    ReportPeriodType.WEEK  -> "%d/%d".format(shifted.monthValue, shifted.dayOfMonth)
+                    ReportPeriodType.MONTH -> "%04d-%02d".format(shifted.year, shifted.monthValue)
+                    ReportPeriodType.YEAR  -> "${shifted.year}"
+                },
+                income  = summary.totalIncome,
+                expense = summary.totalExpense,
+            )
+        }
     }
 
     private fun buildTrendPoints(rows: List<TrendRow>, period: ReportPeriod): List<TrendPoint> {

@@ -1,12 +1,16 @@
 package com.example.bookkeeping.ui
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bookkeeping.data.local.entity.CategoryEntity
 import com.example.bookkeeping.data.local.entity.CategoryType
 import com.example.bookkeeping.data.local.dao.CategoryDao
+import com.example.bookkeeping.data.local.dao.TransactionDao
 import com.example.bookkeeping.domain.usecase.AddExpenseUseCase
+import com.example.bookkeeping.R
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +26,8 @@ import javax.inject.Inject
 class AddTransactionViewModel @Inject constructor(
     private val addExpenseUseCase: AddExpenseUseCase,
     private val categoryDao: CategoryDao,
+    private val transactionDao: TransactionDao,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     data class FormState(
@@ -35,6 +41,7 @@ class AddTransactionViewModel @Inject constructor(
         val isSubmitting: Boolean = false,
         val error: String? = null,
         val success: Boolean = false,
+        val calculatorExpression: String = "",  // 计算表达式 (如 "123 + 456")
     )
 
     private val _formState = MutableStateFlow(FormState())
@@ -45,14 +52,28 @@ class AddTransactionViewModel @Inject constructor(
     }
 
     /**
-     * 加载所有可用分类。
+     * 加载所有可用分类（按使用频率排序）。
      */
     private fun loadCategories(type: String = CategoryType.EXPENSE) {
         viewModelScope.launch {
             categoryDao.observeByType(type).collect { categories ->
+                // 获取分类使用频率
+                val frequencies = try {
+                    transactionDao.getCategoryFrequency(type).associate { 
+                        it.categoryId to it.frequency 
+                    }
+                } catch (e: Exception) {
+                    emptyMap()
+                }
+                
+                // 按频率排序，频率相同的保持原有顺序
+                val sortedCategories = categories.sortedByDescending { 
+                    frequencies[it.id] ?: 0 
+                }
+                
                 _formState.value = _formState.value.copy(
-                    categories = categories,
-                    categoryId = categories.firstOrNull()?.id ?: "others"
+                    categories = sortedCategories,
+                    categoryId = sortedCategories.firstOrNull()?.id ?: "others"
                 )
             }
         }
@@ -149,6 +170,114 @@ class AddTransactionViewModel @Inject constructor(
     }
 
     /**
+     * 打开照片选择器（用于UI触发图片选择）。
+     */
+    fun openPhotoSelector() {
+        // 这个方法由UI层调用后，触发 Activity 的 Intent
+        // 实际的照片 URI 会通过 updatePhotoUri 更新
+    }
+
+    /**
+     * 处理计算器运算符。
+     */
+    fun handleOperator(operator: Char) {
+        val state = _formState.value
+        val expr = state.calculatorExpression + state.amount + " $operator "
+        _formState.value = state.copy(
+            calculatorExpression = expr,
+            amount = "",  // 清空当前输入，等待下一个数字
+        )
+    }
+
+    /**
+     * 计算表达式结果。
+     */
+    fun calculateResult() {
+        val state = _formState.value
+        if (state.calculatorExpression.isBlank() || state.amount.isBlank()) return
+
+        try {
+            val expr = (state.calculatorExpression + state.amount).replace("×", "*").replace("÷", "/")
+            val result = eval(expr)
+            _formState.value = state.copy(
+                amount = result.toString(),
+                calculatorExpression = "",  // 清空表达式
+            )
+        } catch (e: Exception) {
+            val detail = e.message ?: context.getString(R.string.error_unknown)
+            _formState.value = state.copy(
+                error = context.getString(R.string.error_calculation_failed, detail)
+            )
+        }
+    }
+
+    /**
+     * 清除所有（包括表达式）。
+     */
+    fun clearAll() {
+        _formState.value = _formState.value.copy(
+            amount = "",
+            calculatorExpression = "",
+        )
+    }
+
+    /**
+     * 加载现有交易进行编辑
+     */
+    fun loadTransaction(transactionId: String) {
+        viewModelScope.launch {
+            try {
+                val transaction = transactionDao.findById(transactionId)
+                if (transaction != null) {
+                    _formState.value = _formState.value.copy(
+                        amount = String.format(java.util.Locale.US, "%.2f", transaction.amount / 100.0),
+                        type = transaction.type,
+                        categoryId = transaction.categoryId,
+                        selectedDate = transaction.occurredAt,
+                        note = transaction.note ?: "",
+                        photoUri = transaction.photoUri,
+                    )
+                    loadCategories(transaction.type)
+                }
+            } catch (e: Exception) {
+                val detail = e.message ?: context.getString(R.string.error_unknown)
+                _formState.value = _formState.value.copy(
+                    error = context.getString(R.string.error_load_transaction_failed, detail)
+                )
+            }
+        }
+    }
+    private fun eval(expression: String): Double {
+        // 这是一个简化的实现，生产环境可使用 JavaScript 引擎或其他库
+        return try {
+            val parts = expression.split(Regex("(?=[-+*/])|(?<=[--+*/])"))
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+            
+            var result = parts[0].toDouble()
+            var i = 1
+            while (i < parts.size) {
+                if (i >= parts.size - 1) break
+                val op = parts[i]
+                val num = parts[i + 1].toDouble()
+                result = when (op) {
+                    "+" -> result + num
+                    "-" -> result - num
+                    "*" -> result * num
+                    "/" -> if (num != 0.0) result / num else throw Exception(
+                        context.getString(R.string.error_divide_by_zero)
+                    )
+                    else -> result
+                }
+                i += 2
+            }
+            result
+        } catch (e: Exception) {
+            throw Exception(context.getString(R.string.error_expression_parse))
+        }
+    }
+
+    /**
      * 提交表单，新增交易。
      */
     fun submitForm(onSuccess: () -> Unit = {}) {
@@ -181,7 +310,7 @@ class AddTransactionViewModel @Inject constructor(
                 onSuccess()
             } catch (e: Exception) {
                 _formState.value = _formState.value.copy(
-                    error = e.message ?: "添加失败",
+                    error = e.message ?: context.getString(R.string.error_add_failed),
                     isSubmitting = false,
                 )
             }
@@ -205,17 +334,17 @@ class AddTransactionViewModel @Inject constructor(
      */
     private fun validateForm(state: FormState): String? {
         if (state.amount.isBlank()) {
-            return "请输入金额"
+            return context.getString(R.string.error_amount_required)
         }
 
         return try {
             val amount = state.amount.trimEnd('.').toDouble()
             when {
-                amount <= 0 -> "金额必须大于 0"
+                amount <= 0 -> context.getString(R.string.error_amount_positive)
                 else -> null
             }
         } catch (e: NumberFormatException) {
-            "金额格式无效"
+            context.getString(R.string.error_amount_invalid)
         }
     }
 

@@ -28,27 +28,41 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.bookkeeping.R
 import com.example.bookkeeping.data.local.entity.CategoryEntity
 import com.example.bookkeeping.data.local.entity.CategoryType
+import com.example.bookkeeping.ui.components.CalculatorKeypad
+import com.example.bookkeeping.ui.components.NoteAndPhotoSection
+import com.example.bookkeeping.ui.util.localizedCategoryName
+import com.example.bookkeeping.ui.util.PhotoManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
 import android.widget.DatePicker
 import android.widget.LinearLayout
 import android.widget.TimePicker
+import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -58,19 +72,49 @@ import java.util.Locale
 @Composable
 fun AddTransactionScreen(
     viewModel: AddTransactionViewModel = hiltViewModel(),
+    transactionId: String = "",
     onBack: () -> Unit = {},
     onSuccess: () -> Unit = {},
 ) {
     val formState by viewModel.formState.collectAsState()
     var showDatePicker by remember { mutableStateOf(false) }
+    var isKeypadVisible by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+    ) { uri ->
+        uri?.let {
+            val savedUri = PhotoManager.savePhotoFromUri(context, it)
+            viewModel.updatePhotoUri(savedUri?.toString())
+        }
+    }
+
+    // 编辑模式：加载交易
+    LaunchedEffect(transactionId) {
+        if (transactionId.isNotEmpty()) {
+            viewModel.loadTransaction(transactionId)
+        } else {
+            viewModel.clearAll()
+        }
+    }
+
+    val isEditMode = transactionId.isNotEmpty()
+    val screenTitle = if (isEditMode) {
+        stringResource(R.string.screen_title_edit_transaction)
+    } else {
+        stringResource(R.string.screen_title_add_transaction)
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("记一笔") },
+                title = { Text(screenTitle) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.button_back),
+                        )
                     }
                 },
             )
@@ -106,6 +150,17 @@ fun AddTransactionScreen(
                     onCategorySelected = { viewModel.updateCategory(it) },
                 )
 
+                NoteAndPhotoSection(
+                    note = formState.note,
+                    onNoteChange = { viewModel.updateNote(it) },
+                    photoUri = formState.photoUri,
+                    onPhotoSelect = { photoPickerLauncher.launch("image/*") },
+                    onPhotoRemove = {
+                        formState.photoUri?.let { PhotoManager.deletePhoto(Uri.parse(it)) }
+                        viewModel.clearPhoto()
+                    },
+                )
+
                 formState.error?.let { error ->
                     Text(
                         error,
@@ -121,16 +176,34 @@ fun AddTransactionScreen(
                     .align(Alignment.BottomCenter),
             ) {
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Keypad(
-                    amount = formState.amount,
-                    onDigit = { viewModel.appendDigit(it) },
-                    onDot = { viewModel.appendDot() },
-                    onBackspace = { viewModel.backspace() },
-                    onSubmit = {
-                        viewModel.submitForm(onSuccess = onSuccess)
-                    },
-                    enabled = !formState.isSubmitting,
-                )
+                if (isKeypadVisible) {
+                    CalculatorKeypad(
+                        amount = formState.amount,
+                        onDigit = { viewModel.appendDigit(it) },
+                        onDot = { viewModel.appendDot() },
+                        onBackspace = { viewModel.backspace() },
+                        onClear = { viewModel.clearAll() },
+                        onOperator = { viewModel.handleOperator(it) },
+                        onEqual = { viewModel.calculateResult() },
+                        onSubmit = {
+                            viewModel.submitForm(onSuccess = onSuccess)
+                        },
+                        onHide = { isKeypadVisible = false },
+                        enabled = !formState.isSubmitting,
+                        calculatorExpression = formState.calculatorExpression,
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        TextButton(onClick = { isKeypadVisible = true }) {
+                            Text(stringResource(R.string.button_show_keyboard))
+                        }
+                    }
+                }
             }
         }
 
@@ -182,13 +255,13 @@ private fun TypeSelector(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         TypeChip(
-            label = "支出",
+            label = stringResource(R.string.label_expense_type),
             selected = selectedType == CategoryType.EXPENSE,
             onClick = { onTypeSelected(CategoryType.EXPENSE) },
             modifier = Modifier.weight(1f),
         )
         TypeChip(
-            label = "收入",
+            label = stringResource(R.string.label_income_type),
             selected = selectedType == CategoryType.INCOME,
             onClick = { onTypeSelected(CategoryType.INCOME) },
             modifier = Modifier.weight(1f),
@@ -232,7 +305,7 @@ private fun CategoryGridSection(
     selectedCategoryId: String,
     onCategorySelected: (String) -> Unit,
 ) {
-    Text("分类", fontWeight = FontWeight.Bold)
+    Text(stringResource(R.string.label_category), fontWeight = FontWeight.Bold)
     CategoryGrid(
         categories = categories,
         selectedCategoryId = selectedCategoryId,
@@ -295,7 +368,7 @@ private fun CategoryItem(
         ) {
             Text(category.icon ?: "📌", fontSize = 22.sp)
             Text(
-                category.name,
+                localizedCategoryName(category.id, category.name),
                 fontSize = 11.sp,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
             )
@@ -314,7 +387,10 @@ private fun DateChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Icon(Icons.Default.DateRange, contentDescription = "选择日期")
+        Icon(
+            Icons.Default.DateRange,
+            contentDescription = stringResource(R.string.label_select_date),
+        )
         Text(formatHeaderDate(selectedDate), fontSize = 13.sp)
     }
 }
@@ -367,7 +443,7 @@ private fun Keypad(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             KeypadKey(
-                label = "完成",
+                label = stringResource(R.string.keypad_done),
                 onClick = onSubmit,
                 enabled = enabled && amount.isNotBlank(),
                 modifier = Modifier.weight(1f),
@@ -416,15 +492,15 @@ private fun WheelDateTimePickerDialog(
     onDismiss: () -> Unit,
 ) {
     val calendar = remember(selectedDate) { Calendar.getInstance().apply { timeInMillis = selectedDate } }
-    var year by remember { mutableStateOf(calendar.get(Calendar.YEAR)) }
-    var month by remember { mutableStateOf(calendar.get(Calendar.MONTH)) }
-    var day by remember { mutableStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
-    var hour by remember { mutableStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
-    var minute by remember { mutableStateOf(calendar.get(Calendar.MINUTE)) }
+    var year by remember { mutableIntStateOf(calendar.get(Calendar.YEAR)) }
+    var month by remember { mutableIntStateOf(calendar.get(Calendar.MONTH)) }
+    var day by remember { mutableIntStateOf(calendar.get(Calendar.DAY_OF_MONTH)) }
+    var hour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
+    var minute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("选择时间") },
+        title = { Text(stringResource(R.string.title_select_time)) },
         text = {
             AndroidView(
                 factory = { context ->
@@ -461,27 +537,41 @@ private fun WheelDateTimePickerDialog(
                     onDateSelected(cal.timeInMillis)
                 },
             ) {
-                Text("确认")
+                Text(stringResource(R.string.button_confirm))
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) { Text("取消") }
+            Button(onClick = onDismiss) { Text(stringResource(R.string.button_cancel)) }
         },
     )
 }
 
 fun formatDateForDisplay(timeMillis: Long): String {
-    val sdf = SimpleDateFormat("yyyy年MM月dd日 HH:mm", Locale.CHINA)
-    return sdf.format(Date(timeMillis))
+    val formatter = DateFormat.getDateTimeInstance(
+        DateFormat.MEDIUM,
+        DateFormat.SHORT,
+        Locale.getDefault(),
+    )
+    return formatter.format(Date(timeMillis))
 }
 
+@Composable
 private fun formatHeaderDate(timeMillis: Long): String {
     val now = System.currentTimeMillis()
     return if (isSameDay(now, timeMillis)) {
-        val timeFormat = SimpleDateFormat("HH:mm", Locale.CHINA)
-        "今天 ${timeFormat.format(Date(timeMillis))}"
+        val timeFormat = SimpleDateFormat(
+            stringResource(R.string.format_header_time),
+            Locale.getDefault(),
+        )
+        stringResource(
+            R.string.format_header_today,
+            timeFormat.format(Date(timeMillis)),
+        )
     } else {
-        val sdf = SimpleDateFormat("MM.dd HH:mm", Locale.CHINA)
+        val sdf = SimpleDateFormat(
+            stringResource(R.string.format_header_datetime),
+            Locale.getDefault(),
+        )
         sdf.format(Date(timeMillis))
     }
 }

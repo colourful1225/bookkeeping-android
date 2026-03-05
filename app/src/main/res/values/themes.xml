@@ -1,5 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 继承 Material3 主题，Compose 侧通过 MaterialTheme {} 接管 -->
-    <style name="Theme.BookkeepingApp" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.BookkeepingApp" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+        <item name="android:windowAnimationStyle">@style/BookkeepingAppWindowAnimation</item>
+    </style>
+
+    <style name="BookkeepingAppWindowAnimation">
+        <item name="android:activityOpenEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityOpenExitAnimation">@android:anim/fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@android:anim/fade_out</item>
+    </style>
 </resources>

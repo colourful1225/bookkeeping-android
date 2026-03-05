@@ -48,6 +48,7 @@ data class ReportData(
     val trend: List<TrendPoint>,
     val expenseCategories: List<CategoryItem>,
     val incomeCategories: List<CategoryItem>,
+    val recentPeriodTrend: List<TrendPoint> = emptyList(),
 ) {
     /** 支出环比变化（正：增加，负：减少），单位：分。 */
     val expenseDelta: Long get() = current.totalExpense - previous.totalExpense

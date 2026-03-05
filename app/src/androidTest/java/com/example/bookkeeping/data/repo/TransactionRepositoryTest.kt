@@ -40,7 +40,7 @@ class TransactionRepositoryTest {
     fun teardown() = db.close()
 
     @Test
-    fun addExpense_写入后列表立即可见且状态为PENDING() = runTest {
+    fun addExpenseWriteVisiblePending() = runTest {
         repo.addExpense(amount = 500L, categoryId = "food", note = "午饭")
 
         repo.observeTransactions().test {
@@ -53,7 +53,7 @@ class TransactionRepositoryTest {
     }
 
     @Test
-    fun addExpense_同时写入outbox记录() = runTest {
+    fun addExpenseWritesOutboxRecord() = runTest {
         repo.addExpense(amount = 1000L, categoryId = "transport", note = null)
 
         val pending = db.outboxDao().fetchPending(System.currentTimeMillis() + 1_000)
@@ -63,7 +63,7 @@ class TransactionRepositoryTest {
     }
 
     @Test
-    fun addExpense_多次写入不互相干扰() = runTest {
+    fun addExpenseMultipleWritesIndependent() = runTest {
         repeat(3) { i ->
             repo.addExpense(amount = (i + 1) * 100L, categoryId = "misc", note = "item $i")
         }

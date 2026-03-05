@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.bookkeeping.R
 import com.example.bookkeeping.data.local.entity.CategoryEntity
 import com.example.bookkeeping.data.local.entity.CategoryType
 
@@ -57,10 +59,10 @@ fun CategoryManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("记账分类管理") },
+                title = { Text(stringResource(R.string.page_title_category)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
             )
@@ -74,7 +76,10 @@ fun CategoryManagementScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            SectionTitle("支出分类", "点击编辑，长按删除自定义分类")
+            SectionTitle(
+                stringResource(R.string.category_section_expense_title),
+                stringResource(R.string.category_section_hint),
+            )
             CategoryGrid(
                 items = uiState.expenseCategories,
                 onAddClick = { editorState = EditorState(type = CategoryType.EXPENSE, category = null) },
@@ -82,7 +87,10 @@ fun CategoryManagementScreen(
                 onDeleteClick = { viewModel.deleteCategory(it) },
             )
 
-            SectionTitle("收入分类", "点击编辑，长按删除自定义分类")
+            SectionTitle(
+                stringResource(R.string.category_section_income_title),
+                stringResource(R.string.category_section_hint),
+            )
             CategoryGrid(
                 items = uiState.incomeCategories,
                 onAddClick = { editorState = EditorState(type = CategoryType.INCOME, category = null) },
@@ -133,9 +141,10 @@ private fun CategoryGrid(
     onEditClick: (CategoryEntity) -> Unit,
     onDeleteClick: (CategoryEntity) -> Unit,
 ) {
+    val addLabel = stringResource(R.string.category_add_label)
     val fullList = items + CategoryEntity(
         id = "add",
-        name = "添加",
+        name = addLabel,
         icon = null,
         type = items.firstOrNull()?.type ?: CategoryType.EXPENSE,
         isDefault = false,
@@ -218,12 +227,12 @@ private fun AddCategoryCard(onClick: () -> Unit, modifier: Modifier = Modifier) 
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
-                contentDescription = "添加",
+                contentDescription = stringResource(R.string.category_add_label),
                 modifier = Modifier.size(22.dp),
                 tint = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.height(6.dp))
-            Text("添加", fontSize = 11.sp)
+            Text(stringResource(R.string.button_add), fontSize = 11.sp)
         }
     }
 }
@@ -246,23 +255,30 @@ private fun CategoryEditorDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isEdit) "编辑分类" else "新增分类") },
+        title = { Text(if (isEdit) stringResource(R.string.dialog_title_edit_category) else stringResource(R.string.dialog_title_new_category)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("名称") },
+                    label = { Text(stringResource(R.string.label_category_name)) },
                     singleLine = true,
                 )
                 OutlinedTextField(
                     value = icon,
                     onValueChange = { icon = it },
-                    label = { Text("图标（可选）") },
+                    label = { Text(stringResource(R.string.label_category_icon)) },
                     singleLine = true,
                 )
                 Text(
-                    if (state.type == CategoryType.EXPENSE) "类型：支出" else "类型：收入",
+                    stringResource(
+                        R.string.category_type_label,
+                        if (state.type == CategoryType.EXPENSE) {
+                            stringResource(R.string.label_expense_type)
+                        } else {
+                            stringResource(R.string.label_income_type)
+                        },
+                    ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp,
                 )
@@ -272,14 +288,14 @@ private fun CategoryEditorDialog(
             Button(
                 onClick = { onSave(name, icon) },
                 enabled = name.isNotBlank(),
-            ) { Text("保存") }
+            ) { Text(stringResource(R.string.button_save)) }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (isEdit && state.category?.isDefault == false) {
-                    TextButton(onClick = onDelete) { Text("删除") }
+                    TextButton(onClick = onDelete) { Text(stringResource(R.string.button_delete)) }
                 }
-                TextButton(onClick = onDismiss) { Text("取消") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.button_cancel)) }
             }
         },
     )

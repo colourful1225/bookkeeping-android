@@ -9,10 +9,13 @@ import com.example.bookkeeping.data.local.entity.OutboxStatus
 import com.example.bookkeeping.data.local.entity.OpType
 import com.example.bookkeeping.data.local.entity.TransactionEntity
 import com.example.bookkeeping.data.remote.CsvImportResult
+import com.example.bookkeeping.data.util.CategoryMatcher
 import com.example.bookkeeping.data.util.CsvParser
+import com.example.bookkeeping.data.util.ExcelParser
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.provider.OpenableColumns
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.UUID
@@ -47,12 +50,21 @@ class ImportCsvUseCase @Inject constructor(
             val inputStream = context.contentResolver.openInputStream(uri)
                 ?: throw IllegalStateException("无法打开文件: $uri")
 
-            // 解析 CSV
-            val rows = CsvParser.parse(inputStream)
-            inputStream.close()
+            if (isLegacyExcelFile(uri)) {
+                throw IllegalArgumentException("暂不支持 .xls，请另存为 .xlsx 后导入")
+            }
 
-            // 获取所有分类映射
-            val categoryMap = db.categoryDao().getAll().associateBy { it.name }
+            // 解析 CSV/Excel
+            val rows = inputStream.use { stream ->
+                if (isExcelFile(uri)) {
+                    ExcelParser.parse(stream)
+                } else {
+                    CsvParser.parse(stream)
+                }
+            }
+
+            // 获取所有分类（用于匹配）
+            val categories = db.categoryDao().getAll()
 
             val now = System.currentTimeMillis()
 
@@ -62,7 +74,7 @@ class ImportCsvUseCase @Inject constructor(
                     val data = CsvParser.mapRowToImportData(row)
                     val tx = parseRowToTransaction(
                         data = data,
-                        categoryMap = categoryMap,
+                        categories = categories,
                         now = now,
                         rowIndex = index + 2, // +2 因为 1 是头行，计数从 1 开始
                     )
@@ -83,7 +95,7 @@ class ImportCsvUseCase @Inject constructor(
                             createdAt = now,
                         )
                     )
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     errors.add("行 ${index + 2}: ${e.message ?: "未知错误"}")
                 }
             }
@@ -102,7 +114,7 @@ class ImportCsvUseCase @Inject constructor(
                 errors = errors,
                 importedRowCount = rows.size,
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             errors.add("导入失败: ${e.message ?: "未知错误"}")
             CsvImportResult(
                 successCount = 0,
@@ -113,6 +125,36 @@ class ImportCsvUseCase @Inject constructor(
         }
     }
 
+    private fun isExcelFile(uri: Uri): Boolean {
+        val mimeType = context.contentResolver.getType(uri)
+        if (mimeType == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+            return true
+        }
+
+        val displayName = try {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex >= 0 && cursor.moveToFirst()) cursor.getString(nameIndex) else null
+            }
+        } catch (_: Exception) {
+            null
+        }
+
+        return displayName?.lowercase(Locale.ROOT)?.endsWith(".xlsx") == true
+    }
+
+    private fun isLegacyExcelFile(uri: Uri): Boolean {
+        val displayName = try {
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (nameIndex >= 0 && cursor.moveToFirst()) cursor.getString(nameIndex) else null
+            }
+        } catch (_: Exception) {
+            null
+        }
+        return displayName?.lowercase(Locale.ROOT)?.endsWith(".xls") == true
+    }
+
     /**
      * 解析 CSV 行为 TransactionEntity。
      *
@@ -121,9 +163,9 @@ class ImportCsvUseCase @Inject constructor(
      * @param now 当前时间
      * @param rowIndex 行号（用于错误信息）
      */
-    private fun parseRowToTransaction(
+    private suspend fun parseRowToTransaction(
         data: Map<String, String?>,
-        categoryMap: Map<String, com.example.bookkeeping.data.local.entity.CategoryEntity>,
+        categories: List<com.example.bookkeeping.data.local.entity.CategoryEntity>,
         now: Long,
         rowIndex: Int,
     ): TransactionEntity {
@@ -131,8 +173,13 @@ class ImportCsvUseCase @Inject constructor(
         val amountStr = data["amount"]?.trim()
             ?: throw IllegalArgumentException("金额字段缺失或为空")
         
+        val normalizedAmount = amountStr
+            .replace("¥", "")
+            .replace(",", "")
+            .trim()
+
         // 支持 "100", "100.50" 等格式，转换为分（长整数）
-        val amountDouble = amountStr.toDoubleOrNull()
+        val amountDouble = normalizedAmount.toDoubleOrNull()
             ?: throw IllegalArgumentException("金额 '$amountStr' 格式无效")
         
         val amount = (amountDouble * 100).toLong()
@@ -140,31 +187,50 @@ class ImportCsvUseCase @Inject constructor(
             throw IllegalArgumentException("金额必须大于 0，当前值: $amountStr")
         }
 
-        // 解析分类
-        val categoryName = data["category"]?.trim() ?: "others"
-        val categoryId = categoryMap[categoryName]?.id
-            ?: run {
-                // 如果分类不存在，尝试模糊匹配
-                categoryMap.entries.find { 
-                    it.value.name.contains(categoryName, ignoreCase = true) 
-                }?.value?.id ?: "others"
+        // 备注
+        val note = data["note"]?.trim()?.takeIf { it.isNotEmpty() }
+
+        // 解析分类（优先分类字段，其次子类，再用备注做匹配提示）
+        val categoryIdFromFile = data["categoryId"]?.trim().orEmpty()
+        val categoryName = data["category"]?.trim().orEmpty()
+        val subcategoryName = data["subcategory"]?.trim().orEmpty()
+        val categoryId = when {
+            categoryIdFromFile.isNotBlank() && categories.any { it.id == categoryIdFromFile } -> categoryIdFromFile
+            else -> {
+                val categoryHint = when {
+                    categoryName.isNotBlank() -> categoryName
+                    subcategoryName.isNotBlank() -> subcategoryName
+                    else -> note.orEmpty()
+                }
+                CategoryMatcher.matchCategoryName(categoryHint, categories)
             }
+        }
 
         // 解析日期
         val occurredAt = parseDate(data["date"]) ?: now
 
-        // 备注
-        val note = data["note"]?.trim()?.takeIf { it.isNotEmpty() }
+        // 解析收支类型
+        val type = parseType(data["type"]) ?: "EXPENSE"
 
         return TransactionEntity(
             id = UUID.randomUUID().toString(),
             amount = amount,
-            type = "EXPENSE",
+            type = type,
             categoryId = categoryId,
             note = note,
             occurredAt = occurredAt,
             updatedAt = now,
         )
+    }
+
+    private fun parseType(rawType: String?): String? {
+        if (rawType.isNullOrBlank()) return null
+        val normalized = rawType.trim().lowercase(Locale.CHINA)
+        return when {
+            normalized.contains("收入") || normalized == "income" -> "INCOME"
+            normalized.contains("支出") || normalized == "expense" -> "EXPENSE"
+            else -> null
+        }
     }
 
     /**

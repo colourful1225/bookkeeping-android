@@ -1,4 +1,272 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">记账本</string>
+
+    <!-- 自动记账功能 -->
+    <string name="notif_listener_label">支付通知读取（自动记账）</string>
+    <string name="auto_import_title">自动记账</string>
+    <string name="auto_import_notification_label">微信/支付宝通知自动导入</string>
+    <string name="auto_import_notification_desc">读取支付通知自动创建记录（需授予通知使用权）</string>
+    <string name="auto_import_grant_permission">去授权</string>
+    <string name="auto_import_permission_granted">已授权</string>
+    <string name="auto_import_permission_tip_notification">请在系统设置中开启「通知使用权」</string>
+
+    <!-- 无障碍服务 -->
+    <string name="accessibility_service_label">支付通知读取（自动记账）</string>
+    <string name="accessibility_service_desc">读取微信/支付宝支付成功页，获取完整商户名称和金额，自动创建记账记录。仅读取支付相关界面，不收集其他信息。</string>
+    <string name="auto_import_accessibility_label">无障碍服务读取</string>
+    <string name="auto_import_accessibility_desc">结合通知与屏幕内容，自动去重合并，获取更完整记账信息（需在系统无障碍设置中启用）</string>
+
+    <!-- 读取模式 -->
+    <string name="import_mode_title">读取模式</string>
+    <string name="import_mode_sms_only">仅通知读取</string>
+    <string name="import_mode_sms_and_accessibility">通知 + 无障碍服务综合读取</string>
+
+    <!-- 通用设置 -->
+    <string name="back">返回</string>
+    <string name="general_title">通用</string>
+    <string name="general_language_title">软件语言</string>
+    <string name="language_zh">中文</string>
+    <string name="language_en">English</string>
+    <string name="general_theme_title">样式</string>
+    <string name="theme_system">系统</string>
+    <string name="theme_light">明亮</string>
+    <string name="theme_dark">暗黑</string>
+
+    <!-- 设置主页面 -->
+    <string name="settings_title">设置</string>
+    <string name="section_auto_import">自动记账</string>
+    <string name="setting_auto_import">自动记账</string>
+    <string name="setting_auto_import_desc">微信/支付宝通知自动导入</string>
+    <string name="setting_category_management">记账分类管理</string>
+    <string name="setting_budget_management">预算管理</string>
+    <string name="section_general">通用</string>
+    <string name="section_import_data">导入数据</string>
+    <string name="setting_import_data">导入数据</string>
+    <string name="setting_import_data_desc">支持导入其他软件账单（CSV/Excel）</string>
+    <string name="setting_export_data">导出数据</string>
+    <string name="setting_export_data_desc">导出交易记录（包含收支类型与分类）</string>
+    <string name="setting_export_log">导出日志（开发）</string>
+    <string name="setting_export_log_desc">导出调试日志用于问题定位</string>
+    <string name="export_success_suffix">导出成功！</string>
+    <string name="export_success_default">文件</string>
+    <string name="section_about">关于应用</string>
+    <string name="app_name_version">账本记录 v1.1.2</string>
+    <string name="app_description">一个简洁、高效的离线记账应用。</string>
+    <string name="import_result_title">导入结果</string>
+    <string name="import_result_success">✅ 成功: %d 条</string>
+    <string name="import_result_failure">❌ 失败: %d 条</string>
+    <string name="import_result_total">共处理: %d 条</string>
+    <string name="import_result_errors">错误信息</string>
+    <string name="import_result_more_errors">... 及其他 %d 条错误</string>
+
+    <!-- 底部导航 -->
+    <string name="nav_transactions">记账</string>
+    <string name="nav_report">报表</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- 通用按钮 -->
+    <string name="button_back">返回</string>
+    <string name="button_confirm">确定</string>
+
+    <!-- 记账页面 -->
+    <string name="page_title_transactions">记账</string>
+    <string name="search_placeholder">搜索备注、金额…</string>
+    <string name="search_icon_desc">搜索</string>
+    <string name="close_search_icon_desc">关闭搜索</string>
+    <string name="add_transaction_icon_desc">新增支出</string>
+    <string name="no_records">暂无记录，点击 + 新增</string>
+    <string name="wechat_auto_import">微信自动记账</string>
+    <string name="alipay_auto_import">支付宝自动记账</string>
+    
+    <!-- 分类管理页面 -->
+    <string name="page_title_category">记账分类管理</string>
+    <string name="button_add">添加</string>
+    <string name="dialog_title_edit_category">编辑分类</string>
+    <string name="dialog_title_new_category">新增分类</string>
+    <string name="label_category_name">名称</string>
+    <string name="label_category_icon">图标（可选）</string>
+    <string name="button_save">保存</string>
+    <string name="button_delete">删除</string>
+    <string name="button_cancel">取消</string>
+
+    <!-- 预算管理页面 -->
+    <string name="page_title_budget">预算管理</string>
+    <string name="label_budget_overview">预算概览</string>
+    <string name="label_total_budget">本月总预算</string>
+    <string name="label_spent">已支出</string>
+    <string name="label_remaining">剩余</string>
+    <string name="label_category_budgets">分类预算（点击编辑金额）</string>
+    <string name="section_title_reminder">提醒</string>
+    <string name="label_budget_alert">预算提醒</string>
+    <string name="desc_budget_alert">支出超过分类预算时提醒</string>
+    <string name="dialog_title_edit_budget">编辑 %s 预算</string>
+    <string name="label_current_spent">当前已支出：¥%d</string>
+    <string name="label_budget_amount">预算金额（元）</string>
+
+    <!-- 自动记账页面 -->
+    <string name="section_explain">自动记账说明</string>
+    <string name="label_notification_only">仅通知读取</string>
+    <string name="desc_notification_only">通过微信/支付宝支付通知捕获消费记录（推荐，权限最小）</string>
+    <string name="label_notification_and_accessibility">通知 + 无障碍服务综合读取</string>
+    <string name="desc_notification_and_accessibility">额外读取微信/支付宝支付成功页，获取更完整的商户和金额信息，两路数据自动去重合并</string>
+    <string name="warn_accessibility_required">⚠️ 需要启用无障碍服务</string>
+    <string name="button_open">去开启</string>
+    <string name="tip_accessibility">在「无障碍 → 已安装的应用 → 记账本」中开启「支付通知读取」</string>
+    <string name="msg_accessibility_granted">✓ 无障碍服务已授权，双源对账已启用</string>
+    <string name="section_debug">微信/支付宝支付成功页入账日志</string>
+    <string name="label_accessibility_trace">微信/支付宝支付成功页入账日志</string>
+    <string name="desc_accessibility_trace">开启后输出详细日志（权限状态、事件命中、解析失败原因、入账触发），便于真机排查</string>
+    <string name="tip_trace_debug">建议仅在排查问题时开启，日志标签：PayA11yService</string>
+    <string name="warn_permission_not_granted">⚠️ 尚未授权</string>
+    <string name="privacy_notice">隐私提示：通知及屏幕内容仅在本地处理，不会被收集或传输。可随时关闭开关或在系统设置中撤销授权。</string>
+
+    <!-- 报表页面 -->
+    <string name="page_title_report">报表</string>
+    <string name="label_week">周</string>
+    <string name="label_month">月</string>
+    <string name="label_year">年</string>
+    <string name="label_expense_type">支出</string>
+    <string name="label_income_type">收入</string>
+    <string name="label_prev_period">上一期</string>
+    <string name="label_next_period">下一期</string>
+    <string name="chart_label_expense">%s支出（元）</string>
+    <string name="chart_label_daily_avg">日均支出（元）</string>
+    <string name="chart_label_period_compare">比上期支出（元）</string>
+    <string name="chart_label_balance">收支结余（元）</string>
+
+    <!-- 搜索和筛选 -->
+    <string name="search_placeholder_memo">搜索备注...</string>
+    <string name="label_start_date">起：%s</string>
+    <string name="label_end_date">止：%s</string>
+
+    <!-- 备注和相片 -->
+    <string name="label_note_optional">备注（可选）</string>
+    <string name="placeholder_note">添加备注说明...</string>
+
+    <!-- 添加交易页面 -->
+    <string name="label_category">分类</string>
+    <string name="title_select_time">选择时间</string>
+    <string name="button_show_keyboard">显示键盘</string>
+
+    <!-- 分类管理补充 -->
+    <string name="category_section_expense_title">支出分类</string>
+    <string name="category_section_income_title">收入分类</string>
+    <string name="category_section_hint">点击编辑，长按删除自定义分类</string>
+    <string name="category_add_label">添加</string>
+    <string name="category_type_label">类型：%s</string>
+    <string name="category_default_pay_for">代付</string>
+    <string name="category_default_shopping">购物</string>
+    <string name="category_default_dining">餐饮</string>
+    <string name="category_default_transportation">交通</string>
+    <string name="category_default_housing">住房</string>
+    <string name="category_default_entertainment">娱乐</string>
+    <string name="category_default_communication">通讯</string>
+    <string name="category_default_utilities">生活费</string>
+    <string name="category_default_beauty">美容</string>
+    <string name="category_default_pet">宠物</string>
+    <string name="category_default_social">人情社交</string>
+    <string name="category_default_family">亲子</string>
+    <string name="category_default_repayment">还债</string>
+    <string name="category_default_lend_out">借出</string>
+    <string name="category_default_invest">投资</string>
+    <string name="category_default_travel">旅行</string>
+    <string name="category_default_red_packet">红包</string>
+    <string name="category_default_medical">医疗</string>
+    <string name="category_default_education">教育</string>
+    <string name="category_default_consume">消费</string>
+    <string name="category_default_transfer">转账</string>
+    <string name="category_default_others">其他</string>
+    <string name="category_default_salary">薪资</string>
+    <string name="category_default_investment">理财</string>
+    <string name="category_default_refund">退款</string>
+    <string name="category_default_income_others">其他</string>
+    <string name="category_default_income_debt">收债</string>
+    <string name="category_default_borrow_in">借入</string>
+    <string name="category_default_income_red_packet">红包</string>
+    <string name="category_default_income_transfer">转账</string>
+    <string name="language_switching">正在切换语言…</string>
+
+    <!-- 自动记账补充 -->
+    <string name="auto_import_explain_text">开启后，应用将自动读取微信/支付宝付款通知，并在本地创建支出记录。所有数据仅保存在本机，不上传云端。</string>
+    <string name="auto_import_section_wechat_alipay">微信 / 支付宝</string>
+    <string name="auto_import_section_import_mode">微信/支付宝 读取模式</string>
+    <string name="auto_import_section_accessibility_debug">无障碍链路调试</string>
+
+    <!-- 报表补充 -->
+    <string name="report_section_trend">%s趋势</string>
+    <string name="report_section_recent_trend">最近%d期趋势</string>
+    <string name="report_section_expense_breakdown">支出构成</string>
+    <string name="report_section_income_breakdown">收入构成</string>
+    <string name="report_period_week">本周</string>
+    <string name="report_period_month">本月</string>
+    <string name="report_period_year">本年</string>
+    <string name="report_prev_week">上周</string>
+    <string name="report_prev_month">上月</string>
+    <string name="report_prev_year">上年</string>
+    <string name="report_section_compare">对比%s</string>
+    <string name="label_balance_plain">结余</string>
+
+    <!-- 搜索筛选补充 -->
+    <string name="search_desc">搜索</string>
+    <string name="clear_desc">清空</string>
+    <string name="label_transaction_type">交易类型</string>
+    <string name="label_date_range">日期范围</string>
+    <string name="label_start_date_placeholder">开始日期</string>
+    <string name="label_end_date_placeholder">结束日期</string>
+    <string name="label_amount_range">金额范围（元）</string>
+    <string name="label_min_amount">最小：%s</string>
+    <string name="label_max_amount">最大：%s</string>
+    <string name="label_no_limit">不限</string>
+    <string name="label_all">全部</string>
+
+    <!-- 备注与照片补充 -->
+    <string name="photo_add_desc">添加照片</string>
+    <string name="photo_add_label">+ 添加照片凭证</string>
+    <string name="photo_preview_desc">照片凭证</string>
+    <string name="photo_delete_desc">删除照片</string>
+
+    <!-- 新增交易补充 -->
+    <string name="screen_title_add_transaction">记一笔</string>
+    <string name="screen_title_edit_transaction">编辑记账</string>
+    <string name="label_select_date">选择日期</string>
+    <string name="keypad_done">完成</string>
+    <string name="format_full_datetime">yyyy年MM月dd日 HH:mm</string>
+    <string name="format_header_time">HH:mm</string>
+    <string name="format_header_today">今天 %s</string>
+    <string name="format_header_datetime">MM.dd HH:mm</string>
+
+    <!-- 交易列表补充 -->
+    <string name="summary_today_expense">今日支出</string>
+    <string name="summary_month_income">本月收入</string>
+    <string name="summary_month_expense">本月支出</string>
+    <string name="summary_day_totals">支%1$s 收%2$s</string>
+    <string name="sync_status_pending">⏳ 待同步</string>
+    <string name="sync_status_synced">✅ 已同步</string>
+    <string name="sync_status_failed">❌ 失败</string>
+    <string name="sync_status_conflict">⚠️ 冲突</string>
+    <string name="weekday_mon">周一</string>
+    <string name="weekday_tue">周二</string>
+    <string name="weekday_wed">周三</string>
+    <string name="weekday_thu">周四</string>
+    <string name="weekday_fri">周五</string>
+    <string name="weekday_sat">周六</string>
+    <string name="weekday_sun">周日</string>
+
+    <!-- 错误与提示补充 -->
+    <string name="error_unknown">未知错误</string>
+    <string name="error_import_failed">导入失败：%s</string>
+    <string name="error_export_failed">导出失败：%s</string>
+    <string name="error_export_log_failed">日志导出失败：%s</string>
+    <string name="export_success_data">数据</string>
+    <string name="export_success_log">日志</string>
+    <string name="error_calculation_failed">计算错误：%s</string>
+    <string name="error_load_transaction_failed">加载交易失败：%s</string>
+    <string name="error_divide_by_zero">除数不能为0</string>
+    <string name="error_expression_parse">表达式解析失败</string>
+    <string name="error_add_failed">添加失败</string>
+    <string name="error_amount_required">请输入金额</string>
+    <string name="error_amount_positive">金额必须大于 0</string>
+    <string name="error_amount_invalid">金额格式无效</string>
+    <string name="sample_expense_note">示例支出</string>
 </resources>

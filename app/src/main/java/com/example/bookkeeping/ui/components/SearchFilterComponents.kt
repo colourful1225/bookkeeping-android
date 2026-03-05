@@ -26,8 +26,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.example.bookkeeping.R
 import com.example.bookkeeping.domain.model.SearchFilter
 import java.time.LocalDate
 
@@ -55,7 +57,7 @@ fun SearchBar(
     ) {
         Icon(
             imageVector = Icons.Default.Search,
-            contentDescription = "搜索",
+            contentDescription = stringResource(R.string.search_desc),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         
@@ -63,7 +65,7 @@ fun SearchBar(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
-            placeholder = { Text("搜索备注...") },
+            placeholder = { Text(stringResource(R.string.search_placeholder_memo)) },
             singleLine = true,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -78,7 +80,7 @@ fun SearchBar(
             IconButton(onClick = { onQueryChange("") }) {
                 Icon(
                     imageVector = Icons.Default.Close,
-                    contentDescription = "清空",
+                    contentDescription = stringResource(R.string.clear_desc),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -106,7 +108,10 @@ fun FilterChipRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf("EXPENSE" to "支出", "INCOME" to "收入").forEach { (type, label) ->
+            listOf(
+                "EXPENSE" to stringResource(R.string.label_expense_type),
+                "INCOME" to stringResource(R.string.label_income_type),
+            ).forEach { (type, label) ->
                 FilterChip(
                     selected = filter.type == type,
                     onClick = {
@@ -132,7 +137,7 @@ fun FilterChipRow(
                     onClick = {
                         onFilterChange(filter.copy(startDate = null))
                     },
-                    label = { Text("起：${filter.startDate}") },
+                    label = { Text(stringResource(R.string.label_start_date, filter.startDate ?: "")) },
                 )
             }
             if (filter.endDate != null) {
@@ -141,7 +146,7 @@ fun FilterChipRow(
                     onClick = {
                         onFilterChange(filter.copy(endDate = null))
                     },
-                    label = { Text("止：${filter.endDate}") },
+                    label = { Text(stringResource(R.string.label_end_date, filter.endDate ?: "")) },
                 )
             }
         }
@@ -170,7 +175,7 @@ fun AdvancedFilterPanel(
     ) {
         // 交易类型选择
         Text(
-            "交易类型",
+            stringResource(R.string.label_transaction_type),
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(bottom = 4.dp),
         )
@@ -178,7 +183,11 @@ fun AdvancedFilterPanel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf("EXPENSE" to "支出", "INCOME" to "收入", null to "全部").forEach { (type, label) ->
+            listOf(
+                "EXPENSE" to stringResource(R.string.label_expense_type),
+                "INCOME" to stringResource(R.string.label_income_type),
+                null to stringResource(R.string.label_all),
+            ).forEach { (type, label) ->
                 FilterChip(
                     selected = filter.type == type,
                     onClick = {
@@ -191,7 +200,7 @@ fun AdvancedFilterPanel(
         
         // 日期范围
         Text(
-            "日期范围",
+            stringResource(R.string.label_date_range),
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
         )
@@ -213,7 +222,8 @@ fun AdvancedFilterPanel(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    filter.startDate?.toString() ?: "开始日期",
+                    filter.startDate?.toString()
+                        ?: stringResource(R.string.label_start_date_placeholder),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -232,7 +242,8 @@ fun AdvancedFilterPanel(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    filter.endDate?.toString() ?: "结束日期",
+                    filter.endDate?.toString()
+                        ?: stringResource(R.string.label_end_date_placeholder),
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -240,7 +251,7 @@ fun AdvancedFilterPanel(
         
         // 金额范围（简化版，实际应使用 RangeSlider）
         Text(
-            "金额范围 (元)",
+            stringResource(R.string.label_amount_range),
             style = MaterialTheme.typography.labelMedium,
             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
         )
@@ -248,13 +259,17 @@ fun AdvancedFilterPanel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            val minAmountText = filter.minAmount?.let { it / 100.0 }?.toString()
+                ?: stringResource(R.string.label_no_limit)
             Text(
-                "最小：${filter.minAmount?.let { it / 100.0 } ?: "不限"}",
+                stringResource(R.string.label_min_amount, minAmountText),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.weight(1f),
             )
+            val maxAmountText = filter.maxAmount?.let { it / 100.0 }?.toString()
+                ?: stringResource(R.string.label_no_limit)
             Text(
-                "最大：${filter.maxAmount?.let { it / 100.0 } ?: "不限"}",
+                stringResource(R.string.label_max_amount, maxAmountText),
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.weight(1f),
             )
